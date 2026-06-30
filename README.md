@@ -1037,6 +1037,8 @@ public class ExamStatusConstants {
 **字符集**: `utf8mb4`
 **表数量**: 14 张
 
+**数据库源文件**: 请提交 Issue进行留言
+
 ---
 
 ## 系统配置
@@ -1538,6 +1540,8 @@ function validatePassword(password) {
 
 #### 1. 数据库初始化
 
+需要`springbootzlpxsg.sql`数据库脚本的请提交 Issue
+
 ```bash
 # 创建数据库
 mysql -u root -p
@@ -1976,7 +1980,7 @@ router.beforeEach((to, from, next) => {
 
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2026-05-10
-**维护者**: 开发团队
+**文档版本**: v1.1
+**最后更新**: 2026-06-30
+**维护者**: StayG开发团队
 
