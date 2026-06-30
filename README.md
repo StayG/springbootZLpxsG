@@ -1034,370 +1034,8 @@ public class ExamStatusConstants {
 ### 数据库概览
 
 **数据库名称**: `springbootzlpxsg`
-**数据库名称**: `springbootzlpxsg`
-**字符集**: `utf8mb3` / `utf8mb4`
-**排序规则**: `utf8mb3_general_ci` / `utf8mb4_0900_ai_ci`
-**表数量**: 11 张
-**引擎**: InnoDB
-
-### 核心表结构
-
-#### 1. users（学生表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| user_name | varchar(50) | 用户名（唯一，非空） |
-| password | varchar(255) | 密码（BCrypt加密，非空） |
-| avatar | varchar(255) | 头像URL |
-| nickname | varchar(255) | 姓名 |
-| balance | double(10,2) | 余额，默认0.00 |
-| email | varchar(100) | 邮箱（唯一） |
-| phone | varchar(20) | 电话（唯一） |
-| gender | varchar(50) | 性别 |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | timestamp | 修改时间，自动更新 |
-| status | int | 状态（1启用 0禁用），默认1 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- UNIQUE KEY (`user_name`)
-- UNIQUE KEY (`email`)
-- UNIQUE KEY (`phone`)
-
----
-
-#### 2. teachers（教师表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| user_name | varchar(50) | 用户名（唯一，非空） |
-| password | varchar(255) | 密码（BCrypt加密，非空） |
-| real_name | varchar(50) | 真实姓名 |
-| avatar | varchar(255) | 头像URL |
-| email | varchar(100) | 邮箱（唯一） |
-| phone | varchar(20) | 电话（唯一） |
-| gender | varchar(50) | 性别 |
-| kemu_types | int | 任教科目ID（关联dictionary表） |
-| title | varchar(50) | 职称 |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | timestamp | 修改时间，自动更新 |
-| status | int | 状态（1启用 0禁用），默认1 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- UNIQUE KEY (`user_name`)
-- UNIQUE KEY (`email`)
-- UNIQUE KEY (`phone`)
-
----
-
-#### 3. managers（管理员表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| user_name | varchar(255) | 账号（非空） |
-| password | varchar(255) | 密码（BCrypt加密，非空） |
-| real_name | varchar(255) | 姓名（非空） |
-| avatar | varchar(255) | 头像URL |
-| phone | varchar(255) | 手机号（非空） |
-| email | varchar(255) | 邮箱（非空） |
-| create_time | datetime | 创建时间（非空） |
-| role | varchar(255) | 角色标识 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-
----
-
-#### 4. exam_question（试题表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| exam_question_name | longtext | 试题题干（支持富文本HTML） |
-| kemu_types | int | 科目ID（关联dictionary表） |
-| exam_question_options | longtext | 选项（JSON字符串） |
-| exam_question_answer | varchar(200) | 正确答案 |
-| exam_question_analysis | longtext | 答案解析 |
-| exam_question_types | int | 试题类型（1单选 2多选 3判断 4填空 5简答），默认0 |
-| difficulty_level | int | 难度等级（1简单 2中等 3困难），默认2 |
-| knowledge_point | varchar(200) | 知识点标签 |
-| formula_type | varchar(32) | 公式快捷栏类型（none/math/physics/chemistry/biology/geography），默认none |
-| exam_question_sequence | int | 试题排序，值越大越靠前，默认100 |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | timestamp | 修改时间 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-
-**说明**:
-- `formula_type` 字段用于学生端答题时显示对应学科的公式快捷栏
-- `knowledge_point` 用于智能组卷的知识点覆盖约束
-
----
-
-#### 5. exam_paper（试卷表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| exam_paper_name | varchar(200) | 试卷名称（非空） |
-| exam_paper_myscore | int | 试卷总分数（非空），默认0 |
-| kemu_types | int | 科目ID（关联dictionary表） |
-| exam_paper_types | int | 试卷状态（非空），默认0 |
-| zujuan_types | int | 组卷方式（1自动组卷 2手动组卷） |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | timestamp | 修改时间 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-
----
-
-#### 6. exam_paper_topic（试卷选题表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| exam_paper_id | int | 试卷ID（外键，非空） |
-| exam_question_id | int | 试题ID（外键，非空） |
-| exam_paper_topic_number | int | 试题分数（非空），默认0 |
-| exam_paper_topic_sequence | int | 试题排序，默认100 |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- UNIQUE KEY `uk_paper_question` (`exam_paper_id`, `exam_question_id`)
-- FOREIGN KEY (`exam_question_id`) REFERENCES `exam_question` (`id`) ON DELETE CASCADE
-
----
-
-#### 7. exam_info（考试信息表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| exam_name | varchar(200) | 考试名称（非空） |
-| kemu_types | int | 科目ID（非空，关联dictionary表） |
-| teacher_id | int | 创建教师ID（可为NULL，管理员创建时） |
-| exam_paper_id | int | 关联试卷ID（非空） |
-| start_time | datetime | 考试开始时间（非空） |
-| end_time | datetime | 考试结束时间（非空） |
-| duration | int | 考试时长（分钟） |
-| passing_score | int | 及格分数，默认0 |
-| allow_screen_switch | tinyint(1) | 是否允许切屏（0不允许 1允许），默认0 |
-| max_screen_switch | int | 最大切屏次数，默认3 |
-| allow_copy_paste | tinyint(1) | 是否允许复制粘贴（0不允许 1允许），默认0 |
-| option_shuffle | tinyint(1) | 选项乱序（0不乱序 1乱序），默认0 |
-| exam_password | varchar(50) | 考试密码（可选） |
-| show_answer_after_submit | tinyint(1) | 交卷后显示答案（0不显示 1显示），默认0 |
-| allow_retake | tinyint(1) | 允许重考（0不允许 1允许），默认0 |
-| max_retake_count | int | 最多允许重考次数，默认0 |
-| status | tinyint(1) | 考试状态（0未发布 1已发布 2进行中 3已结束），默认0 |
-| create_time | datetime | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | datetime | 更新时间，自动更新 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- INDEX `idx_kemu_types` (`kemu_types`)
-- INDEX `idx_teacher_id` (`teacher_id`)
-- INDEX `idx_exam_paper_id` (`exam_paper_id`)
-- INDEX `idx_status` (`status`)
-- INDEX `idx_start_time` (`start_time`)
-
-**说明**: 考试状态由开始时间和结束时间动态计算
-
----
-
-#### 8. exam_record（考试记录表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| exam_record_uuid_number | varchar(200) | 考试编号（唯一） |
-| users_id | int | 考试用户ID（非空） |
-| exam_paper_id | int | 所属试卷ID（非空） |
-| exam_info_id | int | 所属考试ID（外键） |
-| total_score | int | 所得总分 |
-| auto_score | int | 客观题自动判分总和，默认0 |
-| teacher_score | int | 主观题教师批改得分总和，默认0 |
-| pass_status | tinyint | 及格状态（0待判定 1及格 2不及格），默认0 |
-| status | int | 考试状态（0考试中 1已提交 2强制交卷 3教师已批阅），默认0 |
-| insert_time | datetime | 考试开始时间（非空） |
-| end_time | datetime | 交卷时间/强制结束时间 |
-| create_time | datetime | 创建时间，默认CURRENT_TIMESTAMP |
-| screen_switch_count | int | 切屏次数，默认0 |
-| screen_switch_times | text | 切屏时间列表JSON |
-| is_latest | tinyint(1) | 是否为当前有效记录（1当前有效 0历史作废），默认1 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- INDEX (`exam_paper_id`)
-- INDEX (`exam_record_uuid_number`)
-- FOREIGN KEY `fk_exam_record_exam_info` (`exam_info_id`) REFERENCES `exam_info` (`id`) ON DELETE CASCADE
-- FOREIGN KEY (`exam_paper_id`) REFERENCES `exam_paper` (`id`) ON DELETE CASCADE
-
----
-
-#### 9. exam_details（答题详情表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| exam_details_uuid_number | varchar(200) | 试卷编号（外键） |
-| users_id | int | 用户ID（非空） |
-| exam_record_id | int | 考试记录ID（外键，非空） |
-| exam_question_id | int | 试题ID（外键，非空） |
-| exam_paper_topic_number | int | 题目分值 |
-| exam_paper_topic_sequence | int | 题目在试卷中的排序 |
-| exam_details_myanswer | varchar(200) | 考生答案 |
-| exam_details_myscore | int | 试题得分，默认0 |
-| teacher_score | int | 教师评分（主观题） |
-| teacher_comment | varchar(500) | 教师评语（主观题） |
-| review_status | int | 批阅状态（0待批阅 1已批阅，仅用于简答题），默认0 |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | timestamp | 更新时间，自动更新 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- UNIQUE INDEX `idx_exam_ques` (`exam_record_id`, `exam_question_id`)
-- INDEX (`exam_question_id`)
-- INDEX (`exam_details_uuid_number`)
-- INDEX `idx_exam_record_sequence` (`exam_record_id`, `exam_paper_topic_sequence`)
-- FOREIGN KEY (`exam_question_id`) REFERENCES `exam_question` (`id`) ON DELETE CASCADE
-- FOREIGN KEY (`exam_details_uuid_number`) REFERENCES `exam_record` (`exam_record_uuid_number`) ON DELETE CASCADE
-- FOREIGN KEY `fk_exam_record_id` (`exam_record_id`) REFERENCES `exam_record` (`id`) ON DELETE CASCADE
-
----
-
-#### 10. exam_wrong_question（错题表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| users_id | int | 用户ID（非空） |
-| exam_paper_id | int | 试卷ID（外键，非空） |
-| exam_question_id | int | 试题ID（外键，非空） |
-| exam_details_myanswer | varchar(200) | 考生作答 |
-| mastery_status | tinyint | 掌握状态（0未掌握 1已掌握），默认0 |
-| exam_record_id | int | 关联考试记录ID |
-| insert_time | timestamp | 记录时间，默认CURRENT_TIMESTAMP |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- UNIQUE INDEX `uk_user_record_question` (`users_id`, `exam_record_id`, `exam_question_id`)
-- INDEX (`exam_paper_id`)
-- INDEX (`exam_question_id`)
-- FOREIGN KEY (`exam_paper_id`) REFERENCES `exam_paper` (`id`) ON DELETE CASCADE
-- FOREIGN KEY (`exam_question_id`) REFERENCES `exam_question` (`id`) ON DELETE CASCADE
-
----
-
-#### 11. notices（公告表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| title | varchar(255) | 标题（非空） |
-| content | text | 内容（富文本） |
-| pictures | varchar(255) | 图片URL |
-| teacher_id | int | 发布教师ID |
-| kemu_id | int | 科目ID |
-| create_time | timestamp | 创建时间，默认CURRENT_TIMESTAMP |
-| update_time | timestamp | 修改时间 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- INDEX `idx_teacher_id` (`teacher_id`)
-- INDEX `idx_kemu_id` (`kemu_id`)
-
----
-
-#### 12. sys_operation_log（管理员操作日志表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| operation_time | datetime | 操作时间（非空） |
-| admin_name | varchar(64) | 管理员名称（非空） |
-| operation_module | varchar(64) | 操作模块（非空） |
-| action_type | varchar(32) | 操作类型（新增/修改/删除/发布/导入/禁用），非空 |
-| content | varchar(512) | 操作内容（非空） |
-| ip | varchar(64) | IP地址（非空） |
-| success | tinyint | 操作结果（1成功 0失败），默认1 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- INDEX `idx_op_time` (`operation_time`)
-- INDEX `idx_admin` (`admin_name`)
-- INDEX `idx_module` (`operation_module`)
-
----
-
-#### 13. dictionary（字典表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | bigint | 主键，自增 |
-| dic_code | varchar(200) | 字段（字典编码） |
-| dic_name | varchar(200) | 字段名（字典名称） |
-| code_index | int | 编码（排序索引） |
-| index_name | varchar(200) | 编码名字（字典值） |
-| super_id | int | 父字段ID |
-| remark | varchar(200) | 备注 |
-| create_time | timestamp | 创建时间 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-
-**用途**: 存储系统字典数据（性别、科目、试卷状态、题型等）
-
-**字典类型示例**:
-- `sex_types`: 性别类型（1男 2女）
-- `kemu_types`: 科目（1语文 2数学 3英语 4物理 5化学 6生物 7政治 8历史 9地理）
-- `exam_question_types`: 试题类型（1单选题 2多选题 3判断题 4填空题 5简答题）
-- `exam_paper_types`: 试卷状态（1启用 2禁用）
-- `zujuan_types`: 组卷方式（1自动组卷 2手动组卷）
-
----
-
-#### 14. token（登录凭证表）
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | int | 主键，自增 |
-| user_id | int | 用户ID（非空） |
-| user_name | varchar(100) | 用户名（非空） |
-| table_name | varchar(100) | 表名（users/teachers/managers） |
-| role | varchar(100) | 角色标识 |
-| token | text | JWT Token凭证 |
-| create_time | timestamp | 新增时间，默认CURRENT_TIMESTAMP |
-| expirated_time | timestamp | 过期时间，默认CURRENT_TIMESTAMP |
-| is_blacklisted | int | 是否在黑名单中（0正常 1已失效），默认0 |
-
-**索引**:
-- PRIMARY KEY (`id`)
-- INDEX `idx_user_id` (`user_id`)
-- INDEX `idx_token_blacklist` (`token`(255), `is_blacklisted`)
-
-**说明**: 用于存储JWT Token和实现Token黑名单机制
-
----
-
-### 考试状态码说明
-
-| 状态码 | 状态名称 | 适用表 | 说明 |
-|-------|---------|--------|------|
-| 0 | 未开始 | exam_info（动态计算） | 当前时间 < 开始时间 |
-| 1 | 进行中 | exam_info（动态计算） | 开始时间 ≤ 当前时间 < 结束时间 |
-| 2 | 已结束 | exam_info（动态计算） | 当前时间 ≥ 结束时间 |
-| 0 | 答题中 | exam_record | 学生正在答题 |
-| 1 | 已提交 | exam_record | 学生已提交，等待阅卷 |
-| 2 | 已阅卷 | exam_record | 阅卷完成，成绩已发布 |
+**字符集**: `utf8mb4`
+**表数量**: 14 张
 
 ---
 
@@ -1407,125 +1045,16 @@ public class ExamStatusConstants {
 
 **文件路径**: `back-stage/src/main/resources/application.yml`
 
-
-
-```yaml
-server:
-  port: 9999
-  servlet:
-    context-path: /springbootZLpxsG
-
-spring:
-  application:
-    name: back-stage
-  
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/exam_system?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
-    username: root
-    password: 123456
-  
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      database: 0
-      timeout: 5000ms
-  
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-
-mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.web.domain
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
-# JWT 配置
-jwt:
-  secret: your-secret-key-here-change-in-production
-  expiration: 604800000  # 7天（毫秒）
-
-# 文件上传路径
-file:
-  upload-path: src/main/resources/static/upload/
-```
-
 **关键配置说明**:
 - **端口**: 9999
 - **上下文路径**: `/springbootZLpxsG`（所有接口前缀）
-- **数据库**: MySQL 8.0.33，数据库名 `exam_system`
+- **数据库**: MySQL 8.0.33，数据库名 `springbootzlpxsg`
 - **Redis**: 本地 6379 端口，用于 Token 缓存
 - **文件上传**: 最大 10MB，存储在 `static/upload/`
 - **JWT**: 有效期 7 天，生产环境需修改 `secret`
 
 ---
 
-### 管理端配置文件
-
-**文件路径**: `admin/src/config/config.js`
-
-```javascript
-export default {
-  // 后端 API 基础地址
-  baseUrl: 'http://localhost:9999/springbootZLpxsG',
-  
-  // 角色标识
-  role: {
-    管理员: 'managers',
-    教师: 'teachers',
-    学生: 'users'
-  },
-  
-  // 导航菜单配置
-  indexNav: [
-    { name: '首页', url: '/home' },
-    { name: '试题管理', url: '/examQuestion' },
-    { name: '试卷管理', url: '/examPaper' },
-    { name: '考试管理', url: '/examInfo' },
-    { name: '阅卷管理', url: '/examGrading' },
-    { name: '成绩统计', url: '/gradesStatistics' },
-    { name: '公告管理', url: '/notices' },
-    { name: '用户管理', url: '/users' },
-    { name: '教师管理', url: '/teachers' },
-    { name: '科目管理', url: '/subject' },
-    { name: '操作日志', url: '/operationLog' }
-  ]
-}
-```
-
----
-
-### 学生端配置文件
-
-**文件路径**: `client/src/config/config.js`
-
-```javascript
-export default {
-  // 后端 API 基础地址
-  baseUrl: 'http://localhost:9999/springbootZLpxsG',
-  
-  // 角色标识
-  role: {
-    学生: 'users'
-  },
-  
-  // 导航菜单配置
-  indexNav: [
-    { name: '首页', url: '/home' },
-    { name: '考试中心', url: '/examCenter' },
-    { name: '考试记录', url: '/examRecord' },
-    { name: '错题本', url: '/wrongQuestion' },
-    { name: '公告', url: '/notices' },
-    { name: '帮助中心', url: '/helpCenter' }
-  ]
-}
-```
-
----
 
 ### Vite 代理配置
 
@@ -1537,8 +1066,9 @@ export default defineConfig({
     port: 7777,
     proxy: {
       '/springbootZLpxsG': {
-        target: 'http://localhost:9999',
-        changeOrigin: true
+        target: 'localhost:9999/springbootZLpxsG',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/springbootZLpxsG/, '')
       }
     }
   }
@@ -1553,8 +1083,9 @@ export default defineConfig({
     port: 5555,
     proxy: {
       '/springbootZLpxsG': {
-        target: 'http://localhost:9999',
-        changeOrigin: true
+        target: 'localhost:9999/springbootZLpxsG',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/springbootZLpxsG/, '')
       }
     }
   }
@@ -2010,20 +1541,21 @@ function validatePassword(password) {
 ```bash
 # 创建数据库
 mysql -u root -p
-CREATE DATABASE exam_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE springbootZLpxsG CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-# 导入数据库脚本（假设有 exam_system.sql 文件）
-mysql -u root -p exam_system < exam_system.sql
+# 导入数据库脚本（假设有 springbootZLpxsG.sql 文件）
+mysql -u root -p springbootZLpxsG < springbootZLpxsG.sql
 ```
 
 #### 2. 修改配置文件
 
+修改`application-dev.yml`文件名称为`application.yml`
 编辑 `back-stage/src/main/resources/application.yml`:
 
-```yaml
+```yml
 spring:
   datasource:
-    url: jdbc:mysql://your-db-host:3306/exam_system
+    url: jdbc:mysql://springbootZLpxsG:3306/springbootZLpxsG
     username: your-db-username
     password: your-db-password
   
@@ -2176,7 +1708,7 @@ services:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: 123456
-      MYSQL_DATABASE: exam_system
+      MYSQL_DATABASE: springbootZLpxsG
     ports:
       - "3306:3306"
     volumes:
@@ -2195,7 +1727,7 @@ services:
       - mysql
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/exam_system
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/springbootZLpxsG
       SPRING_REDIS_HOST: redis
 
 volumes:
