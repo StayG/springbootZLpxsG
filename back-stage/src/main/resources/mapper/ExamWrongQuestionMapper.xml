@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.ExamWrongQuestionMapper">
+
+    <select id="selectRespList" resultType="com.web.domain.Resp.ExamWrongQuestionResp">
+        SELECT
+        ew.id,
+        ew.users_id,
+        ew.exam_paper_id,
+        ew.exam_question_id,
+        ew.exam_record_id,
+        ew.mastery_status,
+        ep.exam_paper_name,
+        ei.exam_name,
+        ei.id AS exam_info_id,
+        eq.exam_question_name,
+        eq.exam_question_answer,
+        eq.exam_question_analysis,
+        eq.exam_question_types,
+        eq.exam_question_options,
+        ew.exam_details_myanswer,
+        ed.exam_details_myscore,
+        ew.insert_time,
+        u.nickname,
+        ei.show_answer_after_submit,
+        er.status AS exam_record_status,
+        (SELECT COUNT(*) FROM exam_wrong_question ew2 
+         WHERE ew2.users_id = ew.users_id 
+         AND ew2.exam_question_id = ew.exam_question_id) AS wrong_count
+        FROM
+        exam_wrong_question ew
+        LEFT JOIN exam_paper ep ON ew.exam_paper_id = ep.id
+        LEFT JOIN users u ON ew.users_id = u.id
+        LEFT JOIN exam_question eq ON ew.exam_question_id = eq.id
+        LEFT JOIN exam_record er ON ew.exam_record_id = er.id
+        LEFT JOIN exam_info ei ON er.exam_info_id = ei.id
+        LEFT JOIN exam_details ed ON ed.exam_record_id = ew.exam_record_id
+            AND ew.exam_question_id IS NOT NULL AND TRIM(ew.exam_question_id) != ''
+            AND ed.exam_question_id = CAST(TRIM(ew.exam_question_id) AS UNSIGNED)
+
+        <where>
+            <!-- 不过滤 is_latest：非最新场次产生的错题仍应在错题集中展示 -->
+            <!-- 试卷名称：examPaperName（前端传参） -->
+            <if test="req.usersId != null and req.usersId != ''">
+                AND ew.users_id = #{req.usersId}
+            </if>
+            <!-- 试卷名称：examPaperName（前端传参） -->
+            <if test="req.examPaperName != null and req.examPaperName != ''">
+                AND ep.exam_paper_name LIKE CONCAT('%', #{req.examPaperName}, '%')
+            </if>
+
+            <!-- 试题名称：examQuestionName -->
+            <if test="req.examQuestionName != null and req.examQuestionName != ''">
+                AND eq.exam_question_name LIKE CONCAT('%', #{req.examQuestionName}, '%')
+            </if>
+
+            <!-- 用户名：nickname -->
+            <if test="req.nickname != null and req.nickname != ''">
+                AND u.nickname LIKE CONCAT('%', #{req.nickname}, '%')
+            </if>
+
+            <if test="req.masteryStatus != null">
+                AND ew.mastery_status = #{req.masteryStatus}
+            </if>
+
+        </where>
+        ORDER BY
+        ew.insert_time DESC
+
+    </select>
+    <select id="info" resultType="com.web.domain.Resp.ExamWrongQuestionResp">
+        SELECT
+            ew.id,
+            ew.mastery_status,
+            ep.exam_paper_myscore,
+            eq.exam_question_name,
+            eq.exam_question_options,
+            eq.exam_question_analysis,
+            eq.exam_question_sequence,
+            ew.exam_details_myanswer,
+            eq.exam_question_types,
+            ep.exam_paper_name,
+            ei.exam_name,
+            ei.id AS exam_info_id,
+            eq.exam_question_answer,
+            ew.users_id,
+            ew.exam_paper_id,
+            ew.exam_question_id,
+            ew.exam_record_id,
+            ei.show_answer_after_submit,
+            er.status AS exam_record_status,
+            ed.exam_details_myscore,
+            (SELECT COUNT(*) FROM exam_wrong_question ew2 
+             WHERE ew2.users_id = ew.users_id 
+             AND ew2.exam_question_id = ew.exam_question_id) AS wrong_count
+        FROM
+            exam_wrong_question ew
+                LEFT JOIN exam_paper ep ON ew.exam_paper_id = ep.id
+                LEFT JOIN exam_question eq ON ew.exam_question_id = eq.id
+                LEFT JOIN exam_record er ON ew.exam_record_id = er.id
+                LEFT JOIN exam_info ei ON er.exam_info_id = ei.id
+                LEFT JOIN exam_details ed ON ed.exam_record_id = ew.exam_record_id
+                    AND ew.exam_question_id IS NOT NULL AND TRIM(ew.exam_question_id) != ''
+                    AND ed.exam_question_id = CAST(TRIM(ew.exam_question_id) AS UNSIGNED)
+        where ew.id = #{id}
+
+    </select>
+
+    <select id="selectHistoryByUserAndQuestion" resultType="com.web.domain.Resp.ExamWrongQuestionResp">
+        SELECT
+            ew.id,
+            ew.users_id,
+            ew.exam_paper_id,
+            ew.exam_question_id,
+            ew.exam_record_id,
+            ew.mastery_status,
+            ew.exam_details_myanswer,
+            ew.insert_time,
+            ep.exam_paper_name,
+            ei.exam_name,
+            ei.id AS exam_info_id,
+            ed.exam_details_myscore
+        FROM
+            exam_wrong_question ew
+                LEFT JOIN exam_paper ep ON ew.exam_paper_id = ep.id
+                LEFT JOIN exam_record er ON ew.exam_record_id = er.id
+                LEFT JOIN exam_info ei ON er.exam_info_id = ei.id
+                LEFT JOIN exam_details ed ON ed.exam_record_id = ew.exam_record_id
+                    AND ew.exam_question_id IS NOT NULL AND TRIM(ew.exam_question_id) != ''
+                    AND ed.exam_question_id = CAST(TRIM(ew.exam_question_id) AS UNSIGNED)
+        WHERE ew.users_id = #{usersId}
+          AND ew.exam_question_id = #{examQuestionId}
+        ORDER BY ew.insert_time DESC
+    </select>
+</mapper>

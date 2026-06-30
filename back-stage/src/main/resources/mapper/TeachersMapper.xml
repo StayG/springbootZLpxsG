@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.TeachersMapper">
+
+    <select id="selectRespList" resultType="com.web.domain.Resp.TeachersResp">
+        select
+        *
+        from
+        teachers
+        <where>
+
+            <if test="req.userName != null and req.userName != ''">
+                and user_name like concat('%',#{req.userName},'%')
+            </if>
+            <if test="req.realName != null and req.realName != ''">
+                and real_name like concat('%',#{req.realName},'%')
+            </if>
+            <if test="req.email != null and req.email != ''">
+                and email like concat('%',#{req.email},'%')
+            </if>
+            <if test="req.phone != null and req.phone != ''">
+                and phone like concat('%',#{req.phone},'%')
+            </if>
+            <if test="req.kemuTypes != null">
+                and kemu_types = #{req.kemuTypes}
+            </if>
+            <if test="req.title != null and req.title != ''">
+                and title like concat('%',#{req.title},'%')
+            </if>
+            <if test="req.gender != null and req.gender != ''">
+                and gender = #{req.gender}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.NoticesMapper">
+
+    <select id="selectRespList" resultType="com.web.domain.Resp.NoticesResp">
+        select
+            id,
+            title,
+            content,
+            pictures,
+            teacher_id,
+            kemu_id,
+            create_time,
+            update_time
+        from notices
+        <where>
+            <if test="req.title != null and req.title != ''">
+                and title like concat('%',#{req.title},'%')
+            </if>
+            <!-- 数据隔离：教师可以查看自己发布的公告、本学科公告、以及管理员发布的全局公告 -->
+            <if test="req.role == '教师' or req.role == 'teachers'">
+                and (
+                    teacher_id = #{req.teacherId}
+                    or kemu_id = #{req.kemuId}
+                    or teacher_id = 0
+                )
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+</mapper>

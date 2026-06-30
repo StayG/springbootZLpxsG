@@ -1,0 +1,60 @@
+server:
+  port: 9999
+  servlet:
+    context-path: /springbootZLpxsG
+
+# 文件上传配置
+file:
+  # 开发环境：使用相对路径指向源码目录
+  # 从 back-stage 目录运行时，相对路径指向 src/main/resources/static/upload
+  upload-dir: src/main/resources/static/upload
+  # 生产环境：使用外部路径
+  # upload-dir: ${user.home}/exam-system/upload
+
+spring:
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/springbootzlpxsg?useUnicode=true&characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8
+    # ⚠️ 上线前修改：数据库用户名
+    username:请输入自己的数据库用户名
+    # ⚠️ 上线前修改：数据库密码
+    password:请输入自己的数据库密码
+  servlet:
+    multipart:
+      # ⚠️ 上线前修改：建议改为 10MB
+      max-file-size: 300MB
+      max-request-size: 300MB
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # ⚠️ 上线前修改：Redis密码（生产环境必须设置）
+      password:  # 如果 Redis 没有设置密码，留空即可
+      database: 0  # 使用 0 号数据库
+      timeout: 5000ms  # 连接超时时间
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl 
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+  type-aliases-package: com.web.domain
+  mapper-locations: classpath*:mapper/*.xml
+
+# JWT配置
+jwt:
+  # ⚠️ 上线前修改：JWT密钥（生产环境务必修改为复杂密钥，至少32字符）
+  secret-key:自己的JWT密钥
+  # Token有效期（单位：毫秒，默认1小时）
+  expiration: 3600000
+
+# 操作日志清理配置
+operation-log:
+  # 日志保留天数（默认90天）
+  retention-days: 90
+  cleanup:
+    # 是否启用自动清理（默认true）
+    enabled: true

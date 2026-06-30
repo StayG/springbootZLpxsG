@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.SysOperationLogMapper">
+
+    <!-- 仅 and 条件片段；不依赖 operator_role 等列，兼容未迁移的旧库 -->
+    <sql id="Filter_Conditions">
+        <if test="req.scopeTeacherDisplayName != null and req.scopeTeacherDisplayName != ''">
+            and admin_name = #{req.scopeTeacherDisplayName}
+        </if>
+        <if test="req.beginTime != null and req.beginTime != ''">
+            and operation_time &gt;= #{req.beginTime}
+        </if>
+        <if test="req.endTime != null and req.endTime != ''">
+            and operation_time &lt;= #{req.endTime}
+        </if>
+        <if test="req.adminName != null and req.adminName != ''">
+            and admin_name = #{req.adminName}
+        </if>
+        <if test="req.operationModule != null and req.operationModule != ''">
+            and operation_module = #{req.operationModule}
+        </if>
+        <if test="req.actionType != null and req.actionType != ''">
+            and action_type = #{req.actionType}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            and content like concat('%', #{req.keyword}, '%')
+        </if>
+    </sql>
+
+    <select id="selectPageList" resultType="com.web.domain.SysOperationLog">
+        select id, operation_time, admin_name, operation_module, action_type, content, ip, success
+        from sys_operation_log
+        <where>
+            <include refid="Filter_Conditions"/>
+        </where>
+        order by operation_time desc
+    </select>
+
+    <select id="selectDistinctAdminNames" resultType="java.lang.String">
+        select distinct admin_name from sys_operation_log
+        <where>
+            <include refid="Filter_Conditions"/>
+            and admin_name is not null and admin_name != ''
+        </where>
+        order by admin_name
+    </select>
+
+    <select id="selectExportList" resultType="com.web.domain.SysOperationLog">
+        select id, operation_time, admin_name, operation_module, action_type, content, ip, success
+        from sys_operation_log
+        <where>
+            <include refid="Filter_Conditions"/>
+        </where>
+        order by operation_time desc
+        limit 5000
+    </select>
+</mapper>

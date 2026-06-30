@@ -1,0 +1,19 @@
+.page-content {
+  background: transparent;
+}
+
+.page-content .el-input__wrapper,
+.page-content .el-select__wrapper {
+  min-height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #dbe3f1 inset;
+}
+
+.page-content .el-input__wrapper.is-focus,
+.page-content .el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px #6366f1 inset, 0 0 0 3px rgba(99, 102, 241, 0.16);
+}
+
+.page-content .el-button--primary {
+  border-radius: 8px;
+}

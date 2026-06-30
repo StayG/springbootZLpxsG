@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.ExamInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.web.domain.ExamInfo">
+        <id column="id" property="id"/>
+        <result column="exam_name" property="examName"/>
+        <result column="kemu_types" property="kemuTypes"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="exam_paper_id" property="examPaperId"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="duration" property="duration"/>
+        <result column="passing_score" property="passingScore"/>
+        <result column="allow_screen_switch" property="allowScreenSwitch"/>
+        <result column="max_screen_switch" property="maxScreenSwitch"/>
+        <result column="allow_copy_paste" property="allowCopyPaste"/>
+        <result column="option_shuffle" property="optionShuffle"/>
+        <result column="exam_password" property="examPassword"/>
+        <result column="show_answer_after_submit" property="showAnswerAfterSubmit"/>
+        <result column="allow_retake" property="allowRetake"/>
+        <result column="max_retake_count" property="maxRetakeCount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        
+        <!-- 非数据库字段 -->
+        <result column="kemu_value" property="kemuValue"/>
+        <result column="exam_paper_name" property="examPaperName"/>
+        <result column="exam_paper_score" property="examPaperScore"/>
+        <result column="teacher_name" property="teacherName"/>
+    </resultMap>
+
+    <!-- 分页查询考试信息（支持数据隔离） -->
+    <select id="selectPageList" resultMap="BaseResultMap">
+        SELECT
+            a.*,
+            b.index_name AS kemu_value,
+            c.exam_paper_name,
+            c.exam_paper_myscore AS exam_paper_score,
+            d.real_name AS teacher_name
+        FROM exam_info a
+        LEFT JOIN dictionary b ON a.kemu_types = b.code_index AND b.dic_code = 'kemu_types'
+        LEFT JOIN exam_paper c ON a.exam_paper_id = c.id
+        LEFT JOIN teachers d ON a.teacher_id = d.id
+        <where>
+            <!-- 考试名称模糊查询 -->
+            <if test="req.examName != null and req.examName != ''">
+                AND a.exam_name LIKE CONCAT('%', #{req.examName}, '%')
+            </if>
+            
+            <!-- 科目筛选 -->
+            <if test="req.kemuTypes != null">
+                AND a.kemu_types = #{req.kemuTypes}
+            </if>
+            
+            <!-- 状态筛选 -->
+            <if test="req.status != null">
+                AND a.status = #{req.status}
+            </if>
+            
+            <!-- 数据隔离：教师可查看自己创建的考试 OR 与自己任教科目相同的考试 -->
+            <if test="req.role != null and req.role == '教师'">
+                AND (
+                    a.teacher_id = #{req.teacherId}
+                    OR a.kemu_types = (
+                        SELECT kemu_types FROM teachers WHERE id = #{req.teacherId}
+                    )
+                )
+            </if>
+        </where>
+        ORDER BY a.create_time DESC
+    </select>
+
+    <!-- 学生端分页查询考试信息 -->
+    <select id="selectStudentPageList" resultType="com.web.domain.Resp.StudentExamInfoResp">
+        SELECT
+            a.id,
+            a.exam_name AS examName,
+            a.exam_paper_id AS examPaperId,
+            b.index_name AS kemuValue,
+            d.real_name AS teacherName,
+            a.start_time AS startTime,
+            a.end_time AS endTime,
+            a.duration,
+            c.exam_paper_myscore AS examPaperScore,
+            a.status,
+            a.allow_retake AS allowRetake,
+            a.max_retake_count AS maxRetakeCount,
+            er.exam_record_uuid_number AS examRecordUuidNumber,
+            er.insert_time AS examRecordInsertTime,
+            er.total_score AS totalScore,
+            er.status AS examRecordStatus,
+            (
+                SELECT COUNT(*) FROM exam_details ed
+                LEFT JOIN exam_question eq ON ed.exam_question_id = eq.id
+                WHERE ed.exam_record_id = er.id
+                  AND eq.exam_question_types = 5
+                  AND (ed.review_status = 0 OR ed.review_status IS NULL)
+            ) AS pendingReviewCount
+        FROM exam_info a
+        LEFT JOIN dictionary b ON a.kemu_types = b.code_index AND b.dic_code = 'kemu_types'
+        LEFT JOIN exam_paper c ON a.exam_paper_id = c.id
+        LEFT JOIN teachers d ON a.teacher_id = d.id
+        LEFT JOIN exam_record er ON er.exam_info_id = a.id 
+            AND er.users_id = #{req.usersId}
+            AND er.id = (
+                SELECT MAX(id) FROM exam_record 
+                WHERE exam_info_id = a.id 
+                  AND users_id = #{req.usersId}
+                  AND IFNULL(is_latest, 1) = 1
+            )
+        <where>
+            <!-- 基础过滤：只查询已发布(>0)的考试，不再硬性限制状态值，由Service层动态计算 -->
+            AND a.status > 0
+            
+            <!-- 科目筛选 -->
+            <if test="req.kemuTypes != null">
+                AND a.kemu_types = #{req.kemuTypes}
+            </if>
+            
+            <!-- 考试名称模糊查询 -->
+            <if test="req.examName != null and req.examName != ''">
+                AND a.exam_name LIKE CONCAT('%', #{req.examName}, '%')
+            </if>
+        </where>
+        ORDER BY a.start_time ASC
+    </select>
+
+</mapper>

@@ -1,0 +1,24 @@
+.recommend {
+    .box {
+      .list {
+        display: flex;
+        flex-wrap: wrap;
+  
+        .list-item3 {
+          flex: 0 0 33.33%; // 每行显示 3 个
+        }
+  
+        .list-item4 {
+          flex: 0 0 25%; // 每行显示 4 个
+        }
+  
+        .list-item5 {
+          flex: 0 0 20%; // 每行显示 5 个
+        }
+  
+        .list-item6 {
+          flex: 0 0 16.66%; // 每行显示 6 个
+        }
+      }
+    }
+  }

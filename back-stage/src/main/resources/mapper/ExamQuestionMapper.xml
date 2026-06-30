@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.ExamQuestionMapper">
+
+
+    <select id="selectRespList" resultType="com.web.domain.Resp.ExamQuestionResp">
+
+        SELECT
+
+         a.id as id
+        ,a.exam_question_name
+        ,a.kemu_types
+        ,a.exam_question_options
+        ,a.exam_question_answer
+        ,a.exam_question_analysis
+        ,a.exam_question_types
+        ,a.difficulty_level
+        ,a.knowledge_point
+        ,a.formula_type
+        ,a.exam_question_sequence
+        ,a.create_time
+        ,a.update_time
+        FROM exam_question a
+        <where>
+            <if test="req.id != null">
+                and a.id in
+                <foreach item="item" index="index" collection="req.id" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <!-- 试题名称：examQuestionName -->
+            <if test="req.examQuestionName != null and req.examQuestionName != ''">
+                AND a.exam_question_name LIKE CONCAT('%', #{req.examQuestionName}, '%')
+            </if>
+
+            <!-- 按科目查询 -->
+            <if test="req.kemuTypes != null and req.kemuTypes != ''">
+                AND a.kemu_types = #{req.kemuTypes}
+            </if>
+
+            <!-- 按题型查询 -->
+            <if test="req.examQuestionTypes != null and req.examQuestionTypes != ''">
+                AND a.exam_question_types = #{req.examQuestionTypes}
+            </if>
+
+            <!-- ==================== 数据隔离：教师只能查看自己科目的试题 ==================== -->
+            <if test="req.role == '教师' or req.role == 'teachers'">
+                AND a.kemu_types = #{req.kemuTypes}
+            </if>
+        </where>
+        ORDER BY a.id DESC
+    </select>
+</mapper>

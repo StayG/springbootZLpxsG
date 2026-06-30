@@ -1,0 +1,60 @@
+#Git 忽略文件，控制哪些文件不上传远程仓库
+
+
+# ===================== 后端相关 =====================
+# 后端私有配置（数据库密码、JWT密钥）
+back-stage/src/main/resources/application.yml
+
+# 后端JWT工具类测试
+back-stage/src/test/java/com/web/JwtUtilTest.java
+
+# 后端编译包
+back-stage/target/
+back-stage/*.jar
+
+# IDE缓存
+back-stage/.idea/
+back-stage/*.iml
+
+# 日志
+back-stage/logs/
+back-stage/*.log
+
+# 数据库文件
+*.sql
+*.db
+
+
+# ===================== 两个前端（admin、client）通用 =====================
+# 依赖包（体积巨大）
+admin/node_modules/
+client/node_modules/
+
+# 打包产物
+admin/dist/
+client/dist/
+
+# 本地环境配置
+admin/.env*
+client/.env*
+
+# 编辑器缓存
+admin/.vscode/
+client/.vscode/
+admin/.idea/
+client/.idea/
+
+# 包管理器日志
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# ===================== 全局通用 =====================
+# MacOS系统缓存隐藏文件
+.DS_Store
+# Windows系统缓存隐藏文件
+Thumbs.db
+#项目文档
+项目文档.md

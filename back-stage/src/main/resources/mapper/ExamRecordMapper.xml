@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.ExamRecordMapper">
+    <select id="selectRespList"  resultType="com.web.domain.Resp.ExamRecordResp" >
+        SELECT
+        er.*,
+        ep.exam_paper_name,
+        ep.exam_paper_myscore AS exam_paper_myscore,
+        ep.exam_paper_types AS exam_paper_types,
+        ei.exam_name,
+        ei.start_time AS exam_schedule_start,
+        ei.end_time AS exam_schedule_end,
+        kemud.index_name AS kemu_value,
+        u.nickname,
+        ei.passing_score,
+        -- 统计该考试记录中是否有简答题
+        EXISTS (
+            SELECT 1 FROM exam_details ed
+            LEFT JOIN exam_question eq ON ed.exam_question_id = eq.id
+            WHERE ed.exam_record_id = er.id
+            AND eq.exam_question_types = 5
+        ) AS hasSubjectiveQuestions,
+        -- 统计待批阅的简答题数量
+        (
+            SELECT COUNT(*) FROM exam_details ed
+            LEFT JOIN exam_question eq ON ed.exam_question_id = eq.id
+            WHERE ed.exam_record_id = er.id
+            AND eq.exam_question_types = 5
+            AND (ed.review_status = 0 OR ed.review_status IS NULL)
+        ) AS pendingReviewCount,
+        -- 统计已批阅的简答题数量（用于区分“待阅卷/阅卷中”，即使给 0 分也算已批阅）
+        (
+            SELECT COUNT(*) FROM exam_details ed
+            LEFT JOIN exam_question eq ON ed.exam_question_id = eq.id
+            WHERE ed.exam_record_id = er.id
+            AND eq.exam_question_types = 5
+            AND ed.review_status = 1
+        ) AS reviewedSubjectiveCount,
+        -- 计算实际考试耗时（分钟）
+        CASE 
+            WHEN er.end_time IS NOT NULL AND er.insert_time IS NOT NULL 
+            THEN TIMESTAMPDIFF(MINUTE, er.insert_time, er.end_time)
+            ELSE NULL
+        END AS actualDuration
+        FROM
+        exam_record er
+        LEFT JOIN exam_paper ep ON er.exam_paper_id = ep.id
+        LEFT JOIN users u ON er.users_id = u.id
+        LEFT JOIN exam_info ei ON er.exam_info_id = ei.id
+        LEFT JOIN dictionary kemud ON ei.kemu_types = kemud.code_index AND kemud.dic_code = 'kemu_types'
+        <where>
+            <if test="req.onlyLatest != null and req.onlyLatest == 1">
+                AND IFNULL(er.is_latest, 1) = 1
+            </if>
+            <!-- 阅卷管理：只显示已提交的记录（可选，根据业务需求调整） -->
+            <!-- 如果需要在考试记录页面显示所有状态的记录，请注释掉下面这行 -->
+            <!-- AND er.status = 1 -->
+            
+            <!-- 权限控制：教师按任教学科查看考试记录 -->
+            <if test="req.kemuTypes != null">
+                AND ei.kemu_types = #{req.kemuTypes}
+            </if>
+            
+            <if test=" req.usersId != null">
+                and er.users_id = #{req.usersId}
+            </if>
+            <if test="req.examInfoId != null">
+                AND er.exam_info_id = #{req.examInfoId}
+            </if>
+            <if test=" req.examRecordUuidNumber != '' and req.examRecordUuidNumber != null and req.examRecordUuidNumber != 'null' ">
+                and er.exam_record_uuid_number like CONCAT('%',#{req.examRecordUuidNumber},'%')
+            </if>
+            <!-- 仅按考试安排名称 exam_info.exam_name 子串匹配（不匹配试卷名） -->
+            <if test="req.examPaperName != null and req.examPaperName != ''">
+                AND INSTR(IFNULL(ei.exam_name, ''), #{req.examPaperName}) &gt; 0
+            </if>
+
+            <!-- 用户昵称模糊查询 -->
+            <if test="req.nickname != null and req.nickname != ''">
+                AND u.nickname LIKE CONCAT('%', #{req.nickname}, '%')
+            </if>
+        </where>
+        ORDER BY
+        (ei.start_time IS NULL) ASC,
+        ei.start_time DESC,
+        er.insert_time DESC
+    </select>
+    <select id="getDetailsList" resultType="com.web.domain.Resp.ExamDetailsResp">
+        SELECT
+            r.exam_paper_name,
+            r.exam_paper_myscore,
+            a.id,
+            a.exam_details_uuid_number,
+            a.exam_record_id,
+            a.users_id,
+            a.exam_question_id,
+            a.exam_details_myanswer,
+            a.exam_details_myscore ,
+            a.create_time,
+            a.update_time,
+            a.exam_paper_topic_sequence,
+            eq.exam_question_name,
+            eq.kemu_types AS kemuTypes,
+            eq.exam_question_options,
+            eq.exam_question_answer,
+            eq.exam_question_analysis,
+            eq.exam_question_types,
+            eq.exam_question_sequence,
+            u.nickname AS nickname,
+            u.user_name AS userName,
+            u.avatar AS avatar,
+            u.phone AS phone,
+            u.email AS email,
+            er.total_score,
+            a.exam_paper_topic_number,
+            a.teacher_score,
+            a.teacher_comment,
+            a.review_status
+        FROM
+            exam_record d
+                LEFT JOIN exam_paper r ON d.exam_paper_id = r.id
+                LEFT JOIN exam_details a ON d.id = a.exam_record_id
+                LEFT JOIN exam_question eq ON a.exam_question_id = eq.id
+                LEFT JOIN users u ON a.users_id = u.id
+                LEFT JOIN exam_record er ON a.exam_record_id = er.id
+        where d.exam_record_uuid_number = #{uuid}
+        ORDER BY a.exam_paper_topic_sequence ASC, a.id ASC
+    </select>
+
+    <!-- 成绩已发布（可查看成绩）后的同场排名：最新一条记录，且（阅卷全部完成 status=3，或纯客观卷已交卷 status=1/2） -->
+    <sql id="publishedExamRankCondition">
+        IFNULL(er.is_latest, 1) = 1
+        AND (
+            er.status = 3
+            OR (
+                er.status IN (1, 2)
+                AND NOT EXISTS (
+                    SELECT 1 FROM exam_paper_topic ept
+                    INNER JOIN exam_question eq ON ept.exam_question_id = eq.id
+                    WHERE ept.exam_paper_id = er.exam_paper_id AND eq.exam_question_types = 5
+                )
+            )
+        )
+    </sql>
+
+    <select id="countIfRecordEligibleForExamRank" resultType="int">
+        SELECT COUNT(*) FROM exam_record er
+        WHERE er.id = #{recordId}
+        AND er.exam_info_id IS NOT NULL
+        AND <include refid="publishedExamRankCondition"/>
+    </select>
+
+    <select id="countPublishedExamRecordsForExam" resultType="int">
+        SELECT COUNT(*) FROM exam_record er
+        WHERE er.exam_info_id = #{examInfoId}
+        AND <include refid="publishedExamRankCondition"/>
+    </select>
+
+    <select id="countPublishedExamRecordsWithHigherScore" resultType="int">
+        SELECT COUNT(*) FROM exam_record er
+        WHERE er.exam_info_id = #{examInfoId}
+        AND <include refid="publishedExamRankCondition"/>
+        AND IFNULL(er.total_score, 0) &gt; IFNULL(#{totalScore}, 0)
+    </select>
+
+    <!-- 成绩统计：与排名口径一致的「已出分」记录 -->
+    <sql id="gradesStatisticsScope">
+        <where>
+            er.exam_info_id IS NOT NULL
+            AND <include refid="publishedExamRankCondition"/>
+            AND er.total_score IS NOT NULL
+            <if test="req.examInfoId != null">
+                AND ei.id = #{req.examInfoId}
+            </if>
+            <if test="req.status != null">
+                AND er.status = #{req.status}
+            </if>
+            <if test="req.dateStart != null and req.dateStart != ''">
+                AND DATE(ei.start_time) &gt;= #{req.dateStart}
+            </if>
+            <if test="req.dateEnd != null and req.dateEnd != ''">
+                AND DATE(ei.start_time) &lt;= #{req.dateEnd}
+            </if>
+            <if test="req.kemuTypes != null">
+                AND ei.kemu_types = #{req.kemuTypes}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectGradesSummary" resultType="com.web.domain.Resp.GradesSummaryRow">
+        SELECT
+            COUNT(DISTINCT er.users_id) AS participants,
+            AVG(er.total_score) AS avgScore,
+            MAX(er.total_score) AS maxScore,
+            SUM(CASE WHEN er.total_score &gt;= IFNULL(ei.passing_score, 60) THEN 1 ELSE 0 END) AS passCount,
+            COUNT(*) AS gradedCount,
+            COUNT(DISTINCT ei.id) AS examCount
+        FROM exam_record er
+        INNER JOIN exam_info ei ON er.exam_info_id = ei.id
+        <include refid="gradesStatisticsScope"/>
+    </select>
+
+    <select id="selectGradesScoreDistribution" resultType="com.web.domain.Resp.GradesScoreDistributionRow">
+        SELECT
+            IFNULL(SUM(CASE WHEN er.total_score &gt;= 90 AND er.total_score &lt;= 100 THEN 1 ELSE 0 END), 0) AS cnt90,
+            IFNULL(SUM(CASE WHEN er.total_score &gt;= 80 AND er.total_score &lt; 90 THEN 1 ELSE 0 END), 0) AS cnt80,
+            IFNULL(SUM(CASE WHEN er.total_score &gt;= 70 AND er.total_score &lt; 80 THEN 1 ELSE 0 END), 0) AS cnt70,
+            IFNULL(SUM(CASE WHEN er.total_score &gt;= 60 AND er.total_score &lt; 70 THEN 1 ELSE 0 END), 0) AS cnt60,
+            IFNULL(SUM(CASE WHEN er.total_score &lt; 60 THEN 1 ELSE 0 END), 0) AS cnt0
+        FROM exam_record er
+        INNER JOIN exam_info ei ON er.exam_info_id = ei.id
+        <include refid="gradesStatisticsScope"/>
+    </select>
+
+    <select id="selectGradesDailyTrend" resultType="com.web.domain.Resp.GradesDailyTrendRow">
+        SELECT
+            DATE_FORMAT(t.day_d, '%Y-%m-%d') AS dayKey,
+            DATE_FORMAT(t.day_d, '%m-%d') AS dayLabel,
+            t.avgScore,
+            t.passRate
+        FROM (
+            SELECT
+                DATE(COALESCE(er.end_time, er.insert_time)) AS day_d,
+                AVG(er.total_score) AS avgScore,
+                (SUM(CASE WHEN er.total_score &gt;= IFNULL(ei.passing_score, 60) THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS passRate
+            FROM exam_record er
+            INNER JOIN exam_info ei ON er.exam_info_id = ei.id
+            <where>
+                er.exam_info_id IS NOT NULL
+                AND <include refid="publishedExamRankCondition"/>
+                AND er.total_score IS NOT NULL
+                <if test="req.examInfoId != null">
+                    AND ei.id = #{req.examInfoId}
+                </if>
+                <if test="req.status != null">
+                    AND er.status = #{req.status}
+                </if>
+                <if test="req.dateStart != null and req.dateStart != ''">
+                    AND DATE(ei.start_time) &gt;= #{req.dateStart}
+                </if>
+                <if test="req.dateEnd != null and req.dateEnd != ''">
+                    AND DATE(ei.start_time) &lt;= #{req.dateEnd}
+                </if>
+                <if test="req.kemuTypes != null">
+                    AND ei.kemu_types = #{req.kemuTypes}
+                </if>
+                <if test="trendStart != null and trendStart != ''">
+                    AND DATE(COALESCE(er.end_time, er.insert_time)) &gt;= #{trendStart}
+                </if>
+                <if test="trendEnd != null and trendEnd != ''">
+                    AND DATE(COALESCE(er.end_time, er.insert_time)) &lt;= #{trendEnd}
+                </if>
+            </where>
+            GROUP BY DATE(COALESCE(er.end_time, er.insert_time))
+        ) t
+        ORDER BY t.day_d ASC
+    </select>
+
+    <select id="selectExamGradeCompare" resultType="com.web.domain.Resp.ExamGradeTableRow">
+        SELECT ei.exam_name AS examName, AVG(er.total_score) AS avgScore
+        FROM exam_record er
+        INNER JOIN exam_info ei ON er.exam_info_id = ei.id
+        <include refid="gradesStatisticsScope"/>
+        GROUP BY ei.id, ei.exam_name, ei.start_time
+        ORDER BY ei.start_time DESC
+        LIMIT 12
+    </select>
+
+    <select id="selectExamGradeTable" resultType="com.web.domain.Resp.ExamGradeTableRow">
+        SELECT
+            ei.id AS examInfoId,
+            ei.exam_name AS examName,
+            CASE
+                WHEN ei.start_time IS NULL THEN ''
+                WHEN ei.end_time IS NULL THEN DATE_FORMAT(ei.start_time, '%Y-%m-%d %H:%i:%s')
+                ELSE CONCAT(
+                    DATE_FORMAT(ei.start_time, '%Y-%m-%d %H:%i:%s'),
+                    '—',
+                    DATE_FORMAT(ei.end_time, '%Y-%m-%d %H:%i:%s')
+                )
+            END AS examTimeDisplay,
+            COUNT(DISTINCT er.users_id) AS participants,
+            AVG(er.total_score) AS avgScore,
+            MAX(er.total_score) AS maxScore,
+            (SUM(CASE WHEN er.total_score &gt;= IFNULL(ei.passing_score, 60) THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS passRate
+        FROM exam_record er
+        INNER JOIN exam_info ei ON er.exam_info_id = ei.id
+        <include refid="gradesStatisticsScope"/>
+        GROUP BY ei.id, ei.exam_name, ei.start_time, ei.end_time, ei.passing_score
+        ORDER BY ei.start_time DESC
+    </select>
+
+    <select id="selectExamGradeTableList" resultType="com.web.domain.Resp.ExamGradeTableRow">
+        SELECT
+            ei.id AS examInfoId,
+            ei.exam_name AS examName,
+            CASE
+                WHEN ei.start_time IS NULL THEN ''
+                WHEN ei.end_time IS NULL THEN DATE_FORMAT(ei.start_time, '%Y-%m-%d %H:%i:%s')
+                ELSE CONCAT(
+                    DATE_FORMAT(ei.start_time, '%Y-%m-%d %H:%i:%s'),
+                    '—',
+                    DATE_FORMAT(ei.end_time, '%Y-%m-%d %H:%i:%s')
+                )
+            END AS examTimeDisplay,
+            COUNT(DISTINCT er.users_id) AS participants,
+            AVG(er.total_score) AS avgScore,
+            MAX(er.total_score) AS maxScore,
+            (SUM(CASE WHEN er.total_score &gt;= IFNULL(ei.passing_score, 60) THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS passRate
+        FROM exam_record er
+        INNER JOIN exam_info ei ON er.exam_info_id = ei.id
+        <include refid="gradesStatisticsScope"/>
+        GROUP BY ei.id, ei.exam_name, ei.start_time, ei.end_time, ei.passing_score
+        ORDER BY ei.start_time DESC
+    </select>
+</mapper>

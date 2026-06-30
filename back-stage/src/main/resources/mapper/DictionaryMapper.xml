@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.DictionaryMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id as id
+        ,a.dic_code as dicCode
+        ,a.dic_name as dicName
+        ,a.code_index as codeIndex
+        ,a.index_name as indexName
+        ,a.super_id as superId
+        ,a.remark as remark
+        ,a.create_time as createTime
+    </sql>
+
+    <select id="selectRespList" resultType="com.web.domain.Resp.DictionaryResp">
+        SELECT
+        <include refid="Base_Column_List" />
+        <!-- 级联表的字段 -->
+
+        FROM dictionary  a
+
+        <where>
+            <if test="req.ids != null">
+                and a.id in
+                <foreach item="item" index="index" collection="req.ids" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test=" req.dicCode != '' and req.dicCode != null and req.dicCode != 'null' ">
+                and a.dic_code  = #{req.dicCode}
+            </if>
+            <if test=" req.dicName != '' and req.dicName != null and req.dicName != 'null' ">
+                and a.dic_name like CONCAT('%',#{req.dicName},'%')
+            </if>
+            <if test="req.codeIndexStart != null and req.codeIndexStart != ''">
+                <![CDATA[  and a.code_index >= #{req.codeIndexStart}   ]]>
+            </if>
+            <if test="req.codeIndexEnd != null and req.codeIndexEnd != ''">
+                <![CDATA[  and a.code_index <= #{req.codeIndexEnd}   ]]>
+            </if>
+            <if test="req.codeIndex != null and req.codeIndex != ''">
+                and a.code_index = #{req.codeIndex}
+            </if>
+            <if test=" req.indexName != '' and req.indexName != null and req.indexName != 'null' ">
+                and a.index_name like CONCAT('%',#{req.indexName},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="req.sidx != null and req.sidx != '' and req.order != null and req.order != ''">
+                order by a.${req.sidx} ${req.order}
+            </when>
+            <otherwise>
+                order by a.code_index ASC
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

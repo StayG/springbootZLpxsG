@@ -1,0 +1,13 @@
+/**
+ * 主题 CSS 变量定义
+ * 
+ * 这些是默认的初始值，会被 src/stores/theme.js 动态覆盖
+ * 修改默认值时，请同时更新 theme.js 中的 state 初始值以保持一致
+ */
+:root {
+  
+  
+  // 圆角
+  --border-radius-base: 6px;
+  
+}

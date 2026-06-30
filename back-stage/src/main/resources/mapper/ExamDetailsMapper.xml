@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.ExamDetailsMapper">
+
+    <select id="selectRespList" parameterType="map" resultType="com.web.domain.Resp.ExamDetailsResp">
+        SELECT
+            a.id AS id,
+            a.exam_details_uuid_number,
+            a.users_id ,
+            a.exam_record_id,
+            a.exam_question_id,
+            a.exam_details_myanswer ,
+            a.exam_details_myscore ,
+            a.teacher_score,
+            a.teacher_comment,
+            a.review_status,
+            a.exam_paper_topic_number,
+            a.exam_paper_topic_sequence,
+            a.create_time ,
+            a.update_time ,
+            eq.exam_question_name ,
+            eq.kemu_types ,
+            eq.exam_question_options ,
+            eq.exam_question_answer ,
+            eq.exam_question_analysis,
+            eq.exam_question_types ,
+            eq.exam_question_sequence,
+            u.nickname,
+            u.avatar ,
+            u.phone ,
+            u.email,
+            er.total_score,
+            ept.exam_paper_topic_number AS exam_paper_topic_number
+        FROM
+            exam_details a
+                LEFT JOIN exam_question eq ON a.exam_question_id = eq.id
+                LEFT JOIN users u ON a.users_id = u.id
+                LEFT JOIN exam_record er ON a.exam_record_id = er.id
+                LEFT JOIN exam_paper_topic ept ON a.exam_question_id = ept.exam_question_id 
+                    AND ept.exam_paper_id = er.exam_paper_id
+        <where>
+
+            <!-- 按考试记录ID过滤 -->
+            <if test="req.examRecordId != null">
+                AND a.exam_record_id = #{req.examRecordId}
+            </if>
+
+            <if test="req.examPaperId != null">
+                AND a.exam_paper_id = #{req.examPaperId}
+            </if>
+            <!-- 按试题名称模糊查询 -->
+            <if test="req.examQuestionName != null and req.examQuestionName != ''">
+                AND exam_question.exam_question_name LIKE CONCAT('%', #{req.examQuestionName}, '%')
+            </if>
+
+            <!-- 按用户昵称模糊查询 -->
+            <if test="req.nickname != null and req.nickname != ''">
+                AND u.nickname LIKE CONCAT('%', #{req.nickname}, '%')
+            </if>
+
+            <if test="req.id != null">
+                AND a.id = #{req.id}
+            </if>
+
+        </where>
+        <!-- 关键修复：按题目在试卷中的顺序排序，确保答题详情按原题顺序显示 -->
+        ORDER BY a.exam_paper_topic_sequence DESC, a.id ASC
+    </select>
+    <select id="info" parameterType="java.lang.Integer" resultType="com.web.domain.Resp.ExamDetailsResp">
+        SELECT
+            a.id ,
+            a.exam_details_uuid_number ,
+            a.users_id,
+            a.exam_record_id,
+            a.exam_question_id,
+            a.exam_details_myanswer ,
+            a.exam_details_myscore,
+            a.teacher_score,
+            a.teacher_comment,
+            a.review_status,
+            a.exam_paper_topic_number,
+            a.exam_paper_topic_sequence,
+            a.create_time ,
+            a.update_time ,
+            exam_question.exam_question_name ,
+            exam_question.kemu_types ,
+            exam_question.exam_question_options ,
+            exam_question.exam_question_answer ,
+            exam_question.exam_question_analysis ,
+            exam_question.exam_question_types ,
+            exam_question.exam_question_sequence ,
+            u.nickname,
+            u.avatar ,
+            u.phone ,
+            u.email,
+            ept.exam_paper_topic_number AS exam_paper_topic_number
+        FROM
+        exam_details a
+                LEFT JOIN exam_question exam_question ON a.exam_question_id = exam_question.id
+                LEFT JOIN users u ON a.users_id = u.id
+                LEFT JOIN exam_paper_topic ept ON a.exam_question_id = ept.exam_question_id
+                    AND ept.exam_paper_id = (SELECT exam_paper_id FROM exam_record WHERE id = a.exam_record_id)
+        <where>
+            <if test="id != null">
+                AND a.id = #{id}
+            </if>
+        </where>
+        <!-- 按题目在试卷中的顺序升序排列 -->
+        ORDER BY a.exam_paper_topic_sequence ASC, a.id ASC
+    </select>
+</mapper>

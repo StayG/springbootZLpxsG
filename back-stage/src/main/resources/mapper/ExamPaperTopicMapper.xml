@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.mapper.ExamPaperTopicMapper">
+
+    <select id="selectRespList" resultType="com.web.domain.Resp.ExamPaperTopicResp">
+        SELECT
+            et.id,
+            et.exam_paper_id,
+            et.exam_question_id,
+            et.exam_paper_topic_number,
+            et.exam_paper_topic_sequence,
+            ep.exam_paper_name,
+            eq.exam_question_name,
+            eq.exam_question_types,
+            et.exam_paper_topic_number,
+            ep.kemu_types,
+            ep.exam_paper_myscore,
+            eq.exam_question_options,
+            eq.difficulty_level,
+            eq.knowledge_point
+        FROM
+            exam_paper_topic et
+                LEFT JOIN exam_paper ep ON et.exam_paper_id = ep.id
+                LEFT JOIN exam_question eq ON et.exam_question_id = eq.id
+
+        <where>
+            <if test="req.examPaperId != null ">
+                AND et.exam_paper_id = #{req.examPaperId}
+            </if>
+            <if test="req.examPaperName != null and req.examPaperName != ''">
+                AND ep.exam_paper_name LIKE CONCAT('%', #{req.examPaperName}, '%')
+            </if>
+            <if test="req.examQuestionName != null and req.examQuestionName != ''">
+                AND eq.exam_question_name LIKE CONCAT('%', #{req.examQuestionName}, '%')
+            </if>
+        </where>
+        ORDER BY eq.exam_question_types ASC, et.exam_paper_topic_sequence ASC
+    </select>
+    <select id="info" resultType="com.web.domain.Resp.ExamPaperTopicResp">
+        SELECT
+            et.id,
+            et.exam_paper_id,
+            et.exam_question_id,
+            et.exam_paper_topic_number,
+            ep.exam_paper_name,
+            eq.exam_question_name,
+            eq.exam_question_types,
+            et.exam_paper_topic_number,
+            eq.exam_question_analysis,
+            eq.exam_question_answer,
+            ep.exam_paper_myscore,
+            eq.difficulty_level,
+            eq.knowledge_point
+        FROM
+            exam_paper_topic et
+                LEFT JOIN exam_paper ep ON et.exam_paper_id = ep.id
+                LEFT JOIN exam_question eq ON et.exam_question_id = eq.id
+        WHERE
+            et.id = #{id}
+    </select>
+    <select id="selectListResp" resultType="com.web.domain.Resp.ExamPaperTopicResp">
+        SELECT
+            et.exam_paper_id,
+            et.exam_question_id,
+            ep.id,
+            eq.exam_question_answer,
+            eq.exam_question_types,
+            et.exam_paper_topic_number,
+            et.exam_paper_topic_sequence
+        FROM
+            exam_paper_topic et
+                LEFT JOIN exam_paper ep ON et.exam_paper_id = ep.id
+                LEFT JOIN exam_question eq ON et.exam_question_id = eq.id
+        where
+            et.exam_paper_id = #{req.examPaperId}
+    </select>
+    <select id="selectscore" resultType="java.lang.Integer">
+        SELECT
+            SUM(et.exam_paper_topic_number) AS total_score
+        FROM
+            exam_paper_topic et
+        WHERE
+            et.exam_paper_id= #{examPaperId}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,269 @@
+.module-container {
+  min-height: 100%;
+  border-radius: 14px;
+}
+
+.module-container .page-title {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.module-container .filter-container,
+.module-container .operation-container,
+.module-container .table-scroll-x {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid #ebeef5;
+  border-radius: var(--card-border-radius, 14px);
+  box-shadow: var(--card-shadow, 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.05));
+}
+
+.module-container .filter-container {
+  padding: 16px;
+}
+
+.module-container .filter-container .filter-item-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 列表页筛选区（filter-item-group）：输入框与下拉同宽(220px)、同高(40px)、对齐 */
+.module-container .filter-container .filter-item-group .filter-item {
+  width: 220px;
+  flex: 0 0 220px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.module-container .filter-container .filter-item-group .el-input .el-input__wrapper,
+.module-container .filter-container .filter-item-group .el-select .el-select__wrapper {
+  min-height: 40px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.module-container .filter-container .filter-item-group .el-select {
+  width: 100%;
+}
+
+/* 筛选区内的日期选择器与其他表单项同高、同列宽对齐（消除与下拉框的上下错位） */
+.module-container .filter-container .filter-item-group .el-date-editor {
+  width: 100%;
+  box-sizing: border-box;
+  align-self: center;
+  margin: 0;
+  line-height: 1;
+}
+
+.module-container .filter-container .filter-item-group .el-date-editor.el-input {
+  display: block;
+}
+
+.module-container .filter-container .filter-item-group .el-date-editor .el-input__wrapper {
+  min-height: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.module-container .filter-container .filter-item-group .el-date-editor .el-input__prefix {
+  display: flex;
+  align-items: center;
+}
+
+.module-container .filter-container .filter-item-group .el-date-editor.el-range-editor {
+  min-height: 40px;
+  height: 40px;
+}
+
+.module-container .filter-container .filter-item-group .el-date-editor.el-range-editor .el-input__wrapper {
+  min-height: 40px;
+  height: 40px;
+}
+
+/* 成绩区间、日期范围等需要略宽于 220px 的筛选项 */
+.module-container .filter-container .filter-item-group .filter-item.filter-item--score-range {
+  flex: 0 0 260px;
+  width: 260px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.module-container .filter-container .filter-item-group .filter-item.filter-item--daterange {
+  flex: 0 0 300px;
+  width: 300px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 弹窗内筛选区（挂到 body，无 module-container 包裹） */
+.el-dialog .filter-container .filter-item-group .filter-item {
+  width: 220px;
+  flex: 0 0 220px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.el-dialog .filter-container .filter-item-group .el-input .el-input__wrapper,
+.el-dialog .filter-container .filter-item-group .el-select .el-select__wrapper {
+  min-height: 40px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.el-dialog .filter-container .filter-item-group .el-select {
+  width: 100%;
+}
+
+/* 带 label 的 filter-grid：控件占满格、与上类同高 */
+.module-container .filter-container .filter-grid .filter-item .el-input,
+.module-container .filter-container .filter-grid .filter-item .el-select,
+.module-container .filter-container .filter-grid .filter-item .el-date-editor,
+.module-container .filter-card .filter-grid .filter-item .el-input,
+.module-container .filter-card .filter-grid .filter-item .el-select,
+.module-container .filter-card .filter-grid .filter-item .el-date-editor,
+.module-container .filter-card .filter-grid .el-form-item.filter-item .el-input,
+.module-container .filter-card .filter-grid .el-form-item.filter-item .el-select,
+.module-container .filter-card .filter-grid .el-form-item.filter-item .el-date-editor {
+  width: 100%;
+}
+
+.module-container .filter-container .filter-grid .filter-item .el-input__wrapper,
+.module-container .filter-container .filter-grid .filter-item .el-select__wrapper,
+.module-container .filter-card .filter-grid .filter-item .el-input__wrapper,
+.module-container .filter-card .filter-grid .filter-item .el-select__wrapper,
+.module-container .filter-card .filter-grid .el-form-item.filter-item .el-input__wrapper,
+.module-container .filter-card .filter-grid .el-form-item.filter-item .el-select__wrapper {
+  min-height: 40px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* 单日选择等与输入同高；日期范围使用组件默认高度避免裁切 */
+.module-container .filter-container .filter-grid .filter-item .el-date-editor:not(.el-range-editor) .el-input__wrapper,
+.module-container .filter-card .filter-grid .filter-item .el-date-editor:not(.el-range-editor) .el-input__wrapper,
+.module-container .filter-card .filter-grid .el-form-item.filter-item .el-date-editor:not(.el-range-editor) .el-input__wrapper {
+  min-height: 40px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* filter-card + filter-grid 内单日选择与下拉垂直对齐 */
+.module-container .filter-card .filter-grid .filter-item .el-date-editor {
+  margin: 0;
+  line-height: 1;
+}
+
+.module-container .filter-card .filter-grid .filter-item .el-date-editor.el-input {
+  display: block;
+}
+
+.module-container .filter-card .filter-grid .filter-item .el-date-editor .el-input__wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.module-container .filter-card .filter-grid .filter-item .el-date-editor .el-input__prefix {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .module-container .filter-container .filter-item-group .filter-item {
+    width: 100%;
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+.module-container .operation-container {
+  padding: 14px 16px;
+}
+
+.module-container .table-scroll-x {
+  padding: 12px 14px;
+}
+
+.module-container .el-input__wrapper,
+.module-container .el-select__wrapper {
+  min-height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #dbe3f1 inset;
+}
+
+.module-container .el-input__wrapper.is-focus,
+.module-container .el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px #1890ff inset, 0 0 0 3px rgba(24, 144, 255, 0.16);
+}
+
+.module-container .el-table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.module-container .el-table th.el-table__cell {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+}
+
+.module-container .el-table .el-table__row--striped > td.el-table__cell {
+  background: #fcfdff;
+}
+
+.module-container .el-table__body tr:hover > td.el-table__cell {
+  background: var(--table-row-hover-bg, #f0f9ff);
+}
+
+/* 管理端全局表格主题兜底：覆盖页面内局部粉色变量 */
+.content-main .el-table th.el-table__cell {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.content-main .el-table tr td.el-table__cell {
+  background: #ffffff !important;
+  color: #334155 !important;
+}
+
+.content-main .el-table .el-table__row--striped > td.el-table__cell {
+  background: #fcfdff !important;
+}
+
+.content-main .el-table__body tr:hover > td.el-table__cell {
+  background: var(--table-row-hover-bg, #f0f9ff) !important;
+}
+
+.content-main .el-table,
+.content-main .el-table--border {
+  border-color: #e2e8f0 !important;
+}
+
+.el-overlay .el-dialog {
+  border-radius: 14px;
+  border: 1px solid #e7ecf4;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.14);
+}
+
+.el-overlay .el-dialog__header {
+  border-bottom: 1px solid #ebeef5;
+  margin-right: 0;
+  padding: 16px 20px 14px;
+}
+
+.el-overlay .el-dialog__title {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.el-overlay .el-dialog__body {
+  padding: 18px 20px 12px;
+}
+
+.el-overlay .el-dialog__footer {
+  border-top: 1px solid #ebeef5;
+  padding: 12px 20px 16px;
+}
